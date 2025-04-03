@@ -1,5 +1,19 @@
 spring:
   config:
-    import: classpath:application-gateway-secret.yml
-  profiles:
-    active: prod
+    import: "optional:configserver:"
+  application:
+    name: gate-way-service
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: GlobalFilter
+          args:
+            preLogger: true
+            postLogger: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, httptrace, info, metrics, prometheus
