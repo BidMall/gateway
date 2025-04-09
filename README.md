@@ -31,6 +31,7 @@
 - **Programming Language**: Java `21`
 - **Build Tool**: Gradle
 
+<img width="676" alt="Image" src="https://github.com/user-attachments/assets/10786d42-bed7-4c63-a0d4-5b5a0b3284a8" />
 
 
 
