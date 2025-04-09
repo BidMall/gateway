@@ -11,9 +11,46 @@ spring:
           args:
             preLogger: true
             postLogger: true
+        - name: RateLimiterFilter
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=2
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - StripPrefix=2
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=2
+
+  zipkin:
+    base-url: http://localhost:9411
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: refresh, health, beans, httptrace, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
