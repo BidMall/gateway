@@ -54,3 +54,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+jwt:
+  secret: my-secret-key-for-jwt-signing
+  expiration: 3600000 #1시간
