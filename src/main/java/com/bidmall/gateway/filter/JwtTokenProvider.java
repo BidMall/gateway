@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class TokenProvider {
+public class JwtTokenProvider {
 
 	private final JwtTokenValidator jwtTokenValidator;
 
