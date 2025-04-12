@@ -7,11 +7,6 @@ spring:
   cloud:
     gateway:
       default-filters:
-        - name: GlobalFilter
-          args:
-            preLogger: true
-            postLogger: true
-        - name: RateLimiterFilter
       discovery:
         locator:
           enabled: true
