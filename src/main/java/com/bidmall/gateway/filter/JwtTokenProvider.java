@@ -7,7 +7,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
 @Component
-public class TokenProvider {
+public class JwtTokenProvider {
 
 	@Value("${jwt.secret}")
 	private String secret;

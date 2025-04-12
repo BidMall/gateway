@@ -20,7 +20,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 	@Value("${jwt.secret}")
 	private String secret;
 
-	private final TokenProvider tokenProvider;
+	private final JwtTokenProvider tokenProvider;
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -32,19 +32,12 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
 		String token = authHeader.substring(7);
 		try {
-			return chain.filter(exchange.mutate()
-				.request(getHeader(exchange, tokenProvider.parsingToken(token))).build());
+			Claims claims = tokenProvider.parsingToken(token);
+			ServerHttpRequest mutatedRequest = HeaderUtils.addHeader(exchange, claims);
+			return chain.filter(exchange.mutate().request(mutatedRequest).build());
 		} catch (JwtException e) {
 			return unauthorized(exchange);
 		}
-	}
-
-	private static ServerHttpRequest getHeader(ServerWebExchange exchange, Claims claims) {
-		ServerHttpRequest request;
-		request = exchange.getRequest().mutate()
-			.header("X-User-Id", claims.getSubject())
-			.build();
-		return request;
 	}
 
 	private Mono<Void> unauthorized(ServerWebExchange exchange) {
