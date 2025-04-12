@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter implements GlobalFilter {
+
 	@Value("${jwt.secret}")
 	private String secret;
 
@@ -26,17 +27,36 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
 		String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+		if (!hasValidAuthorizationHeader(authHeader)) {
 			return unauthorized(exchange);
 		}
-
-		String token = authHeader.substring(7);
+		String token = extractToken(authHeader);
 		try {
 			Claims claims = tokenProvider.parsingToken(token);
+			validateClaims(claims);
 			ServerHttpRequest mutatedRequest = HeaderUtils.addHeader(exchange, claims);
 			return chain.filter(exchange.mutate().request(mutatedRequest).build());
 		} catch (JwtException e) {
 			return unauthorized(exchange);
+		}
+	}
+
+	private boolean hasValidAuthorizationHeader(String authHeader) {
+		return authHeader != null && authHeader.startsWith("Bearer ");
+	}
+
+	private String extractToken(String authHeader) {
+		return authHeader.substring(7);
+	}
+
+	private void validateClaims(Claims claims) {
+		if (claims.getSubject() == null || claims.getSubject().isEmpty()) {
+			throw new JwtException("Invalid token: missing subject");
+		}
+
+		if (!"bidmall-user-service".equals(claims.getIssuer())) {
+			throw new JwtException("Invalid token: unknown issuer");
 		}
 	}
 
@@ -45,4 +65,3 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 		return exchange.getResponse().setComplete();
 	}
 }
-
