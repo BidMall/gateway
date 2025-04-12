@@ -2,6 +2,7 @@ package com.bidmall.gateway.filter;
 
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +13,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 
-@Component
+@Component("myJwtTokenProvider")
 @ConfigurationProperties(prefix = "jwt")
 public class JwtTokenProvider {
 
+	@Value("${jwt.secret}")
 	private String secret;
 
 	/**
@@ -38,6 +40,17 @@ public class JwtTokenProvider {
 		}
 	}
 
+	/**
+	 * 토큰만료시간 검증
+	 * @param claims
+	 */
+	private void validateTokenExpiration(Claims claims) {
+		Date expirationDate = claims.getExpiration();
+		if (expirationDate != null && expirationDate.before(new Date())) {
+			throw new JwtException("Token is expired");
+		}
+	}
+
 	private Claims parseToken(String token) {
 		try {
 			return Jwts.parser()
@@ -50,17 +63,6 @@ public class JwtTokenProvider {
 			throw new JwtException("Invalid signature", e);
 		} catch (MalformedJwtException e) {
 			throw new JwtException("Malformed token", e);
-		}
-	}
-
-	/**
-	 * 토큰만료시간 검증
-	 * @param claims
-	 */
-	private void validateTokenExpiration(Claims claims) {
-		Date expirationDate = claims.getExpiration();
-		if (expirationDate != null && expirationDate.before(new Date())) {
-			throw new JwtException("Token is expired");
 		}
 	}
 }

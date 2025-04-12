@@ -1,6 +1,6 @@
 spring:
   config:
-    import: "optional:configserver:"
+    import: "optional:configserver:"  # Config Server와의 연동
   application:
     name: gate-way-service
 
@@ -39,6 +39,13 @@ spring:
   zipkin:
     base-url: http://localhost:9411
 
+  eureka:
+    client:
+      serviceUrl:
+        defaultZone: http://localhost:8761/eureka  # Eureka 서버 주소
+    healthcheck:
+      enabled: true  # Eureka 서버 상태 체크
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
@@ -56,5 +63,5 @@ management:
       show-details: always
 
 jwt:
-  secret: my-secret-key-for-jwt-signing
-  expiration: 3600000 #1시간
+  secret: ${JWT_SECRET_KEY}  # JWT 비밀 키
+  expiration: 3600000  # JWT 만료 시간 (1시간)

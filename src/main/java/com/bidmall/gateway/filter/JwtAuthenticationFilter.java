@@ -1,5 +1,7 @@
 package com.bidmall.gateway.filter;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -11,17 +13,19 @@ import org.springframework.web.server.ServerWebExchange;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter implements GlobalFilter {
 
 	@Value("${jwt.secret}")
 	private String secret;
-
 	private final JwtTokenProvider tokenProvider;
+
+	@Autowired
+	public JwtAuthenticationFilter(@Qualifier("myJwtTokenProvider") JwtTokenProvider tokenProvider) {
+		this.tokenProvider = tokenProvider;
+	}
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
