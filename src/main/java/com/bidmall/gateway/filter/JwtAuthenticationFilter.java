@@ -11,13 +11,16 @@ import org.springframework.web.server.ServerWebExchange;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter implements GlobalFilter {
 	@Value("${jwt.secret}")
 	private String secret;
+
+	private final TokenProvider tokenProvider;
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -30,18 +33,10 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 		String token = authHeader.substring(7);
 		try {
 			return chain.filter(exchange.mutate()
-				.request(getHeader(exchange, parsingToken(token))).build());
+				.request(getHeader(exchange, tokenProvider.parsingToken(token))).build());
 		} catch (JwtException e) {
 			return unauthorized(exchange);
 		}
-	}
-
-	private Claims parsingToken(String token) {
-		Claims claims = Jwts.parser()
-			.setSigningKey(secret)
-			.parseClaimsJws(token)
-			.getBody();
-		return claims;
 	}
 
 	private static ServerHttpRequest getHeader(ServerWebExchange exchange, Claims claims) {
