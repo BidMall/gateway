@@ -1,6 +1,8 @@
 package com.bidmall.gateway.filter;
 
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Date;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -11,20 +13,19 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 
 @Component
+@ConfigurationProperties(prefix = "jwt")
 public class JwtTokenProvider {
 
-	@Value("${jwt.secret}")
 	private String secret;
-
-	@Value("${jwt.expiration}")
-	private long expiration; // ms
 
 	/**
 	 * 토큰 파싱 및 검증
 	 */
 	public Claims parsingToken(String token) {
 		validateTokenFormat(token);
-		return parseToken(token);
+		Claims claims = parseToken(token);
+		validateTokenExpiration(claims);
+		return claims;
 	}
 
 	private void validateTokenFormat(String token) {
@@ -49,6 +50,17 @@ public class JwtTokenProvider {
 			throw new JwtException("Invalid signature", e);
 		} catch (MalformedJwtException e) {
 			throw new JwtException("Malformed token", e);
+		}
+	}
+
+	/**
+	 * 토큰만료시간 검증
+	 * @param claims
+	 */
+	private void validateTokenExpiration(Claims claims) {
+		Date expirationDate = claims.getExpiration();
+		if (expirationDate != null && expirationDate.before(new Date())) {
+			throw new JwtException("Token is expired");
 		}
 	}
 }
