@@ -2,7 +2,6 @@ package com.bidmall.gateway.filter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpHeaders;
@@ -18,8 +17,6 @@ import reactor.core.publisher.Mono;
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter {
 
-	@Value("${jwt.secret}")
-	private String secret;
 	private final JwtTokenProvider tokenProvider;
 
 	@Autowired
@@ -27,6 +24,16 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 		this.tokenProvider = tokenProvider;
 	}
 
+	/**
+	 * ServerWebExchange 요청(Request)과 응답(Response) 담아둠
+	 * 콜백처리 Thread
+	 * 현재코드 동기적인 방식 -> 비동기 처리
+	 * Jmeter
+	 *
+	 * @param exchange the current server exchange
+	 * @param chain provides a way to delegate to the next filter
+	 * @return
+	 */
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		ServerHttpRequest request = exchange.getRequest();
@@ -38,9 +45,12 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 		String token = extractToken(authHeader);
 		try {
 			Claims claims = tokenProvider.parsingToken(token);
-			validateClaims(claims);
+			validateSubjectAndIssuer(claims);
 			ServerHttpRequest mutatedRequest = HeaderUtils.addHeader(exchange, claims);
-			return chain.filter(exchange.mutate().request(mutatedRequest).build());
+			ServerWebExchange mutateExchange = exchange.mutate()
+				.request(mutatedRequest)
+				.build();
+			return chain.filter(mutateExchange);
 		} catch (JwtException e) {
 			return unauthorized(exchange);
 		}
@@ -54,7 +64,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 		return authHeader.substring(7);
 	}
 
-	private void validateClaims(Claims claims) {
+	private void validateSubjectAndIssuer(Claims claims) {
 		if (claims.getSubject() == null || claims.getSubject().isEmpty()) {
 			throw new JwtException("Invalid token: missing subject");
 		}
